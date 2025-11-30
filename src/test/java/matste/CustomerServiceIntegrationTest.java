@@ -10,10 +10,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,6 +44,9 @@ public class CustomerServiceIntegrationTest {
 
 	@Autowired
 	private CustomerFixture customerFixture;
+
+	@Autowired
+	private TransactionTemplate transactionTemplate;
 
 	@BeforeEach
 	void setUp() {
@@ -92,6 +97,56 @@ public class CustomerServiceIntegrationTest {
 		// Verify the customer is deleted
 		Customer deletedCustomer = customerService.findById(customerId);
 		assertEquals(null, deletedCustomer);
+	}
+
+	@Test
+	void shouldTransferFunds() {
+		// Initialize customers in first transaction
+		Long fromCustomerId = transactionTemplate.execute(status -> {
+			Customer fromCustomer = customerService.createCustomer("Alice", new BigDecimal("1000.00"));
+			return fromCustomer.getId();
+		});
+
+		Long toCustomerId = transactionTemplate.execute(status -> {
+			Customer toCustomer = customerService.createCustomer("Bob", new BigDecimal("500.00"));
+			return toCustomer.getId();
+		});
+
+		// Execute transfer in separate transaction
+		transactionTemplate.execute(status -> {
+			customerService.transferFunds(fromCustomerId, toCustomerId, new BigDecimal("300.00"));
+			return null;
+		});
+
+		// Verify the balances have been updated
+		Customer updatedFromCustomer = customerService.findById(fromCustomerId);
+		Customer updatedToCustomer = customerService.findById(toCustomerId);
+
+		assertEquals(new BigDecimal("700.00"), updatedFromCustomer.getBalance());
+		assertEquals(new BigDecimal("800.00"), updatedToCustomer.getBalance());
+	}
+
+	@Test
+	@Transactional
+	void shouldThrowExceptionWhenInsufficientFunds() {
+		// Create two customers with initial balances
+		Customer fromCustomer = customerService.createCustomer("Alice", new BigDecimal("100.00"));
+		Customer toCustomer = customerService.createCustomer("Bob", new BigDecimal("500.00"));
+
+		// Attempt to transfer more funds than available
+		Exception exception = org.junit.jupiter.api.Assertions.assertThrows(
+				IllegalArgumentException.class,
+				() -> customerService.transferFunds(fromCustomer.getId(), toCustomer.getId(), new BigDecimal("200.00"))
+		);
+
+		assertEquals("Insufficient funds for transfer", exception.getMessage());
+
+		// Verify the balances have not changed
+		Customer unchangedFromCustomer = customerService.findById(fromCustomer.getId());
+		Customer unchangedToCustomer = customerService.findById(toCustomer.getId());
+
+		assertEquals(new BigDecimal("100.00"), unchangedFromCustomer.getBalance());
+		assertEquals(new BigDecimal("500.00"), unchangedToCustomer.getBalance());
 	}
 }
 
