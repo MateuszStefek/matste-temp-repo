@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -38,10 +39,10 @@ public class CustomerController {
 
 	@PostMapping
 	public Customer createCustomer(@RequestBody CreateCustomerRequest request) {
-		return customerService.createCustomer(request.name());
+		return customerService.createCustomer(request.name(), request.balance());
 	}
 
-	public record CreateCustomerRequest(String name) {
+	public record CreateCustomerRequest(String name, BigDecimal balance) {
 	}
 }
 

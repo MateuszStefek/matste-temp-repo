@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "customer")
 public class Customer {
@@ -15,6 +17,8 @@ public class Customer {
 	private Long id;
 
 	private String name;
+
+	private BigDecimal balance;
 
 	public Customer() {
 	}
@@ -37,6 +41,14 @@ public class Customer {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public BigDecimal getBalance() {
+		return balance;
+	}
+
+	public void setBalance(BigDecimal balance) {
+		this.balance = balance;
 	}
 }
 

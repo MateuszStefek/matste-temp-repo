@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @Testcontainers
-@Transactional
 @ActiveProfiles("test")
 public class CustomerServiceIntegrationTest {
 
@@ -41,6 +40,9 @@ public class CustomerServiceIntegrationTest {
 	@Autowired
 	private CustomerService customerService;
 
+	@Autowired
+	private CustomerFixture customerFixture;
+
 	@BeforeEach
 	void setUp() {
 		// Clean up all customers before each test to ensure isolation
@@ -48,9 +50,10 @@ public class CustomerServiceIntegrationTest {
 	}
 
 	@Test
+	@Transactional
 	void shouldCreateAndFindCustomer() {
 		// Create a customer
-		Customer customer = customerService.createCustomer("John Doe");
+		Customer customer = customerService.createCustomer("John Doe", null);
 
 		assertNotNull(customer.getId());
 		assertEquals("John Doe", customer.getName());
@@ -64,10 +67,10 @@ public class CustomerServiceIntegrationTest {
 	}
 
 	@Test
+	@Transactional
 	void shouldFindAllCustomers() {
-		// Create multiple customers
-		customerService.createCustomer("Alice");
-		customerService.createCustomer("Bob");
+		// Create multiple customers using fixture
+		customerFixture.insertAliceAndBob();
 
 		// Find all customers
 		List<Customer> customers = customerService.findAll();
@@ -77,9 +80,10 @@ public class CustomerServiceIntegrationTest {
 	}
 
 	@Test
+	@Transactional
 	void shouldDeleteCustomer() {
 		// Create a customer
-		Customer customer = customerService.createCustomer("Jane Doe");
+		Customer customer = customerService.createCustomer("Jane Doe", null);
 		Long customerId = customer.getId();
 
 		// Delete the customer

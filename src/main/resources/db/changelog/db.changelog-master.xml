@@ -14,5 +14,13 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="2" author="matste">
+        <addColumn tableName="customer">
+            <column name="balance" type="DECIMAL(19,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
 
