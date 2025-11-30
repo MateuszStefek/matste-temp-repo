@@ -42,7 +42,16 @@ public class CustomerController {
 		return customerService.createCustomer(request.name(), request.balance());
 	}
 
+	@PostMapping("/transfer")
+	public ResponseEntity<Void> transferFunds(@RequestBody TransferFundsRequest request) {
+		customerService.transferFunds(request.fromCustomerId(), request.toCustomerId(), request.amount());
+		return ResponseEntity.ok().build();
+	}
+
 	public record CreateCustomerRequest(String name, BigDecimal balance) {
+	}
+
+	public record TransferFundsRequest(Long fromCustomerId, Long toCustomerId, BigDecimal amount) {
 	}
 }
 
