@@ -1,5 +1,6 @@
 package matste;
 
+import lombok.extern.slf4j.Slf4j;
 import matste.entity.Customer;
 import matste.service.CustomerService;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")
+@Slf4j
 public class CustomerServiceIntegrationTest {
 
 	@Container
@@ -101,24 +103,24 @@ public class CustomerServiceIntegrationTest {
 
 	@Test
 	void shouldTransferFunds() {
-		// Initialize customers in first transaction
+		log.info("GIVEN");
 		Long fromCustomerId = transactionTemplate.execute(status -> {
 			Customer fromCustomer = customerService.createCustomer("Alice", new BigDecimal("1000.00"));
 			return fromCustomer.getId();
 		});
-
 		Long toCustomerId = transactionTemplate.execute(status -> {
 			Customer toCustomer = customerService.createCustomer("Bob", new BigDecimal("500.00"));
 			return toCustomer.getId();
 		});
 
-		// Execute transfer in separate transaction
+		log.info("WHEN");
+
 		transactionTemplate.execute(status -> {
 			customerService.transferFunds(fromCustomerId, toCustomerId, new BigDecimal("300.00"));
 			return null;
 		});
 
-		// Verify the balances have been updated
+		log.info("THEN");
 		Customer updatedFromCustomer = customerService.findById(fromCustomerId);
 		Customer updatedToCustomer = customerService.findById(toCustomerId);
 
@@ -147,6 +149,26 @@ public class CustomerServiceIntegrationTest {
 
 		assertEquals(new BigDecimal("100.00"), unchangedFromCustomer.getBalance());
 		assertEquals(new BigDecimal("500.00"), unchangedToCustomer.getBalance());
+	}
+
+	@Test
+	void transferFundsForSameCustomer() {
+		log.info("GIVEN");
+		// Initialize customers in first transaction
+		Long customerId = transactionTemplate.execute(status -> {
+			Customer fromCustomer = customerService.createCustomer("Alice", new BigDecimal("1000.00"));
+			return fromCustomer.getId();
+		});
+
+		log.info("WHEN");
+
+		// Execute transfer in separate transaction
+		transactionTemplate.execute(status -> {
+			customerService.transferFunds(customerId, customerId, new BigDecimal("300.00"));
+			return null;
+		});
+
+		log.info("THEN");
 	}
 }
 

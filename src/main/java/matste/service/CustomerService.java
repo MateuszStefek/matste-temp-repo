@@ -24,11 +24,14 @@ public class CustomerService {
 		Customer fromCustomer = requireNonNull(entityManager.find(Customer.class, fromCustomerId));
 		Customer toCustomer = requireNonNull(entityManager.find(Customer.class, toCustomerId));
 
-		if (fromCustomer.getBalance().compareTo(amount) < 0) {
+		BigDecimal fromBalanceOriginal = fromCustomer.getBalance();
+		BigDecimal toBalanceOriginal = toCustomer.getBalance();
+
+		if (fromBalanceOriginal.compareTo(amount) < 0) {
 			throw new IllegalArgumentException("Insufficient funds for transfer");
 		}
-		fromCustomer.setBalance(fromCustomer.getBalance().subtract(amount));
-		toCustomer.setBalance(toCustomer.getBalance().add(amount));
+		fromCustomer.setBalance(fromBalanceOriginal.subtract(amount));
+		toCustomer.setBalance(toBalanceOriginal.add(amount));
 	}
 
 	public Customer createCustomer(String name, BigDecimal balance) {
