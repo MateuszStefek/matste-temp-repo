@@ -5,15 +5,15 @@ import static java.util.Objects.requireNonNull;
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
+import lombok.extern.slf4j.Slf4j;
 import matste.entity.Customer;
 
-@Service
-@Transactional
+@Slf4j
 public class CustomerService {
 
 	@PersistenceContext
@@ -30,6 +30,7 @@ public class CustomerService {
 		if (fromBalanceOriginal.compareTo(amount) < 0) {
 			throw new IllegalArgumentException("Insufficient funds for transfer");
 		}
+
 		fromCustomer.setBalance(fromBalanceOriginal.subtract(amount));
 		toCustomer.setBalance(toBalanceOriginal.add(amount));
 	}
