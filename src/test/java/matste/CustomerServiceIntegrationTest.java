@@ -52,8 +52,10 @@ public class CustomerServiceIntegrationTest {
 
 	@BeforeEach
 	void setUp() {
-		// Clean up all customers before each test to ensure isolation
-		customerService.findAll().forEach(customer -> customerService.deleteById(customer.getId()));
+		transactionTemplate.executeWithoutResult(status -> {
+			// Clean up all customers before each test to ensure isolation
+			customerService.findAll().forEach(customer -> customerService.deleteById(customer.getId()));
+		});
 	}
 
 	@Test
